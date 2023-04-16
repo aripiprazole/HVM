@@ -2,8 +2,8 @@ use crate::language;
 use crate::runtime::*;
 use std::collections::{hash_map, HashMap};
 use std::rc::Rc;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 
 // A runtime term
 #[derive(Clone, Debug)]
@@ -89,7 +89,7 @@ impl Program {
     let mut nams = U64Map::new();
     // Adds the built-in functions
     for fid in 0..crate::runtime::precomp::precomp_count() as usize {
-      let v = precomp_get();
+      let v = PRECOMP.lock().unwrap();
       if let Some(precomp) = v.get(fid) {
         if let Some(fs) = &precomp.funs {
           funs.insert(

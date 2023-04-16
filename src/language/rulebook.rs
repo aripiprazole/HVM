@@ -34,7 +34,7 @@ pub fn new_rulebook() -> RuleBook {
     id_to_name: HashMap::new(),
     ctr_is_fun: HashMap::new(),
   };
-  for precomp in runtime::precomp_get().iter() {
+  for precomp in runtime::PRECOMP.lock().unwrap().iter() {
     book.name_count = book.name_count + 1;
     book.name_to_id.insert(precomp.name.to_string(), precomp.id);
     book.id_to_name.insert(precomp.id, precomp.name.to_string());
