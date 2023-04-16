@@ -280,15 +280,11 @@ lazy_static! {
 }
 
 pub fn precomp_get() -> Vec<Precomp> {
-  unsafe {
       PRECOMP.lock().unwrap().clone()
-  }
 }
 
 pub fn precomp_count() -> u64 {
-  unsafe {
       PRECOMP.lock().unwrap().len() as u64
-  }
 }
 
 // Ul0.if (cond: Term) (if_t: Term) (if_f: Term)

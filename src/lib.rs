@@ -10,6 +10,7 @@
 
 pub mod language;
 pub mod runtime;
+pub mod api;
 
 pub use language::{*};
 pub use runtime::{*};
