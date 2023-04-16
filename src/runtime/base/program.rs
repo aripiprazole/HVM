@@ -89,7 +89,7 @@ impl Program {
     let mut nams = U64Map::new();
     // Adds the built-in functions
     for fid in 0..crate::runtime::precomp::precomp_count() as usize {
-      let v = PRECOMP.lock().unwrap();
+      let v = precomp_get();
       if let Some(precomp) = v.get(fid) {
         if let Some(fs) = &precomp.funs {
           funs.insert(
