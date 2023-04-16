@@ -1,14 +1,18 @@
+use lazy_static::lazy_static;
+
 use crate::runtime::{*};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
 
 // Precomps
 // --------
 
+#[derive(Clone)]
 pub struct PrecompFuns {
   pub visit: VisitFun,
   pub apply: ApplyFun,
 }
 
+#[derive(Clone)]
 pub struct Precomp {
   pub id: u64,
   pub name: &'static str,
@@ -48,7 +52,7 @@ pub const HVM_STORE : u64 = 28;
 pub const HVM_LOAD : u64 = 29;
 //[[CODEGEN:PRECOMP-IDS]]//
 
-pub const PRECOMP : &[Precomp] = &[
+pub const REALLY_PRECOMP: &[Precomp] = &[
   Precomp {
     id: STRING_NIL,
     name: "String.nil",
@@ -256,7 +260,15 @@ pub const PRECOMP : &[Precomp] = &[
 //[[CODEGEN:PRECOMP-ELS]]//
 ];
 
-pub const PRECOMP_COUNT : u64 = PRECOMP.len() as u64;
+lazy_static! {
+  pub static ref PRECOMP: Mutex<Vec<Precomp>> = Mutex::new({
+    REALLY_PRECOMP.to_vec()
+  });
+}
+
+pub fn precom_count() -> u64 {
+  PRECOMP.lock().unwrap().len() as u64
+}
 
 // Ul0.if (cond: Term) (if_t: Term) (if_f: Term)
 // ---------------------------------------------

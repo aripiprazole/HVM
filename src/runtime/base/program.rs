@@ -94,8 +94,8 @@ impl Program {
     let mut aris = U64Map::new();
     let mut nams = U64Map::new();
     // Adds the built-in functions
-    for fid in 0 .. crate::runtime::precomp::PRECOMP_COUNT as usize {
-      if let Some(precomp) = PRECOMP.get(fid) {
+    for fid in 0 .. crate::runtime::precomp::precom_count() as usize {
+      if let Some(precomp) = PRECOMP.lock().unwrap().get(fid) {
         if let Some(fs) = &precomp.funs {
           funs.insert(fid as u64, Function::Compiled {
             smap: precomp.smap.to_vec().into_boxed_slice(),

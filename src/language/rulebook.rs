@@ -34,7 +34,7 @@ pub fn new_rulebook() -> RuleBook {
     id_to_name: HashMap::new(),
     ctr_is_fun: HashMap::new(),
   };
-  for precomp in runtime::PRECOMP {
+  for precomp in runtime::PRECOMP.lock().unwrap().iter() {
     book.name_count = book.name_count + 1;
     book.name_to_id.insert(precomp.name.to_string(), precomp.id);
     book.id_to_name.insert(precomp.id, precomp.name.to_string());
@@ -142,7 +142,7 @@ pub fn gen_rulebook(file: &language::syntax::File) -> RuleBook {
 
   // Adds each group
   for (name, group) in groups.iter() {
-    if book.name_to_id.get(name).unwrap_or(&u64::MAX) >= &runtime::PRECOMP_COUNT {
+    if book.name_to_id.get(name).unwrap_or(&u64::MAX) >= &runtime::precom_count() {
       add_group(&mut book, name, group);
     }
   }
