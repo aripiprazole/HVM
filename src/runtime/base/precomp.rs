@@ -68,7 +68,7 @@ pub const HVM_LOAD : u64 = 29;
 
 
 lazy_static! {
-  static ref PRECOMP: Mutex<Vec<Precomp>> = {
+  pub static ref PRECOMP: Mutex<Vec<Precomp>> = {
     Mutex::new(vec![
       Precomp {
         id: STRING_NIL,
