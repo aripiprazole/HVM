@@ -33,7 +33,7 @@ pub fn build_rulebook(book: &language::rulebook::RuleBook) -> (String, String) {
   // precomp els
   let mut precomp_els = String::new();
   for id in itertools::sorted(book.id_to_name.keys()) {
-    if id >= &runtime::precom_count() {
+    if id >= &runtime::precomp_count() {
       let name = book.id_to_name.get(id).unwrap();
       line(&mut precomp_els, 0, &format!(r#"  Precomp {{"#));
       line(&mut precomp_els, 0, &format!(r#"    id: {},"#, &build_name(&name)));
@@ -54,7 +54,7 @@ pub fn build_rulebook(book: &language::rulebook::RuleBook) -> (String, String) {
   // precomp fns
   let mut precomp_fns = String::new();
   for id in itertools::sorted(book.id_to_name.keys()) {
-    if id >= &runtime::precom_count() {
+    if id >= &runtime::precomp_count() {
       let name = book.id_to_name.get(id).unwrap();
       if let Some(rules) = book.rule_group.get(name) {
         let (got_visit, got_apply) = build_function(book, &name, &rules.1);
@@ -68,7 +68,7 @@ pub fn build_rulebook(book: &language::rulebook::RuleBook) -> (String, String) {
   let mut fast_visit = String::new();
   line(&mut fast_visit, 7, &format!("match fid {{"));
   for id in itertools::sorted(book.id_to_name.keys()) {
-    if id >= &runtime::precom_count() {
+    if id >= &runtime::precomp_count() {
       let name = book.id_to_name.get(id).unwrap();
       if let Some(rules) = book.rule_group.get(name) {
         line(&mut fast_visit, 8, &format!("{} => {{", &build_name(&name)));
@@ -88,7 +88,7 @@ pub fn build_rulebook(book: &language::rulebook::RuleBook) -> (String, String) {
   let mut fast_apply = String::new();
   line(&mut fast_apply, 8, &format!("match fid {{"));
   for id in itertools::sorted(book.id_to_name.keys()) {
-    if id >= &runtime::precom_count() {
+    if id >= &runtime::precomp_count() {
       let name = book.id_to_name.get(id).unwrap();
       if let Some(rules) = book.rule_group.get(name) {
         line(&mut fast_apply, 9, &format!("{} => {{", &build_name(&name)));

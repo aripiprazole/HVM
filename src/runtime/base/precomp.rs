@@ -1,23 +1,37 @@
 use lazy_static::lazy_static;
 
 use crate::runtime::{*};
-use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
+use std::sync::{atomic::{AtomicBool, Ordering}, Mutex, Arc};
 
 // Precomps
 // --------
 
-#[derive(Clone)]
 pub struct PrecompFuns {
   pub visit: VisitFun,
   pub apply: ApplyFun,
 }
 
-#[derive(Clone)]
 pub struct Precomp {
   pub id: u64,
   pub name: &'static str,
   pub smap: &'static [bool],
   pub funs: Option<PrecompFuns>,
+}
+
+impl Clone for Precomp {
+  fn clone(&self) -> Self {
+    let funs = self.funs.as_ref().map(|PrecompFuns { visit, apply }| PrecompFuns {
+      visit: Arc::clone(visit),
+      apply: Arc::clone(apply),
+    });
+
+    Precomp {
+      id: self.id,
+      name: self.name,
+      smap: self.smap,
+      funs,
+    }
+  }
 }
 
 pub const STRING_NIL : u64 = 0;
@@ -52,222 +66,229 @@ pub const HVM_STORE : u64 = 28;
 pub const HVM_LOAD : u64 = 29;
 //[[CODEGEN:PRECOMP-IDS]]//
 
-pub const REALLY_PRECOMP: &[Precomp] = &[
-  Precomp {
-    id: STRING_NIL,
-    name: "String.nil",
-    smap: &[false; 0],
-    funs: None,
-  },
-  Precomp {
-    id: STRING_CONS,
-    name: "String.cons",
-    smap: &[false; 2],
-    funs: None,
-  },
-  Precomp {
-    id: BOTH,
-    name: "Both",
-    smap: &[false; 2],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT0,
-    name: "Kind.Term.ct0",
-    smap: &[false; 2],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT1,
-    name: "Kind.Term.ct1",
-    smap: &[false; 3],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT2,
-    name: "Kind.Term.ct2",
-    smap: &[false; 4],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT3,
-    name: "Kind.Term.ct3",
-    smap: &[false; 5],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT4,
-    name: "Kind.Term.ct4",
-    smap: &[false; 6],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT5,
-    name: "Kind.Term.ct5",
-    smap: &[false; 7],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT6,
-    name: "Kind.Term.ct6",
-    smap: &[false; 8],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT7,
-    name: "Kind.Term.ct7",
-    smap: &[false; 9],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT8,
-    name: "Kind.Term.ct8",
-    smap: &[false; 10],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CT9,
-    name: "Kind.Term.ct9",
-    smap: &[false; 11],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTA,
-    name: "Kind.Term.ctA",
-    smap: &[false; 12],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTB,
-    name: "Kind.Term.ctB",
-    smap: &[false; 13],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTC,
-    name: "Kind.Term.ctC",
-    smap: &[false; 14],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTD,
-    name: "Kind.Term.ctD",
-    smap: &[false; 15],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTE,
-    name: "Kind.Term.ctE",
-    smap: &[false; 16],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTF,
-    name: "Kind.Term.ctF",
-    smap: &[false; 17],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_CTG,
-    name: "Kind.Term.ctG",
-    smap: &[false; 18],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_U60,
-    name: "Kind.Term.u60",
-    smap: &[false; 2],
-    funs: None,
-  },
-  Precomp {
-    id: KIND_TERM_F60,
-    name: "Kind.Term.f60",
-    smap: &[false; 2],
-    funs: None,
-  },
-  Precomp {
-    id: U60_IF,
-    name: "U60.if",
-    smap: &[true, false, false],
-    funs: Some(PrecompFuns {
-      visit: u60_if_visit,
-      apply: u60_if_apply,
-    }),
-  },
-  Precomp {
-    id: U60_SWAP,
-    name: "U60.swap",
-    smap: &[true, false, false],
-    funs: Some(PrecompFuns {
-      visit: u60_swap_visit,
-      apply: u60_swap_apply,
-    }),
-  },
-  Precomp {
-    id: HVM_LOG,
-    name: "HVM.log",
-    smap: &[false; 2],
-    funs: Some(PrecompFuns {
-      visit: hvm_log_visit,
-      apply: hvm_log_apply,
-    }),
-  },
-  Precomp {
-    id: HVM_QUERY,
-    name: "HVM.query",
-    smap: &[false; 1],
-    funs: Some(PrecompFuns {
-      visit: hvm_query_visit,
-      apply: hvm_query_apply,
-    }),
-  },
-  Precomp {
-    id: HVM_PRINT,
-    name: "HVM.print",
-    smap: &[false; 2],
-    funs: Some(PrecompFuns {
-      visit: hvm_print_visit,
-      apply: hvm_print_apply,
-    }),
-  },
-  Precomp {
-    id: HVM_SLEEP,
-    name: "HVM.sleep",
-    smap: &[false; 2],
-    funs: Some(PrecompFuns {
-      visit: hvm_sleep_visit,
-      apply: hvm_sleep_apply,
-    }),
-  },
-  Precomp {
-    id: HVM_STORE,
-    name: "HVM.store",
-    smap: &[false; 3],
-    funs: Some(PrecompFuns {
-      visit: hvm_store_visit,
-      apply: hvm_store_apply,
-    }),
-  },
-  Precomp {
-    id: HVM_LOAD,
-    name: "HVM.load",
-    smap: &[false; 2],
-    funs: Some(PrecompFuns {
-      visit: hvm_load_visit,
-      apply: hvm_load_apply,
-    }),
-  },
-//[[CODEGEN:PRECOMP-ELS]]//
-];
 
 lazy_static! {
-  pub static ref PRECOMP: Mutex<Vec<Precomp>> = Mutex::new({
-    REALLY_PRECOMP.to_vec()
-  });
+  static ref PRECOMP: Mutex<Vec<Precomp>> = {
+    Mutex::new(vec![
+      Precomp {
+        id: STRING_NIL,
+        name: "String.nil",
+        smap: &[false; 0],
+        funs: None,
+      },
+      Precomp {
+        id: STRING_CONS,
+        name: "String.cons",
+        smap: &[false; 2],
+        funs: None,
+      },
+      Precomp {
+        id: BOTH,
+        name: "Both",
+        smap: &[false; 2],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT0,
+        name: "Kind.Term.ct0",
+        smap: &[false; 2],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT1,
+        name: "Kind.Term.ct1",
+        smap: &[false; 3],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT2,
+        name: "Kind.Term.ct2",
+        smap: &[false; 4],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT3,
+        name: "Kind.Term.ct3",
+        smap: &[false; 5],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT4,
+        name: "Kind.Term.ct4",
+        smap: &[false; 6],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT5,
+        name: "Kind.Term.ct5",
+        smap: &[false; 7],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT6,
+        name: "Kind.Term.ct6",
+        smap: &[false; 8],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT7,
+        name: "Kind.Term.ct7",
+        smap: &[false; 9],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT8,
+        name: "Kind.Term.ct8",
+        smap: &[false; 10],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CT9,
+        name: "Kind.Term.ct9",
+        smap: &[false; 11],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTA,
+        name: "Kind.Term.ctA",
+        smap: &[false; 12],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTB,
+        name: "Kind.Term.ctB",
+        smap: &[false; 13],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTC,
+        name: "Kind.Term.ctC",
+        smap: &[false; 14],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTD,
+        name: "Kind.Term.ctD",
+        smap: &[false; 15],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTE,
+        name: "Kind.Term.ctE",
+        smap: &[false; 16],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTF,
+        name: "Kind.Term.ctF",
+        smap: &[false; 17],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_CTG,
+        name: "Kind.Term.ctG",
+        smap: &[false; 18],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_U60,
+        name: "Kind.Term.u60",
+        smap: &[false; 2],
+        funs: None,
+      },
+      Precomp {
+        id: KIND_TERM_F60,
+        name: "Kind.Term.f60",
+        smap: &[false; 2],
+        funs: None,
+      },
+      Precomp {
+        id: U60_IF,
+        name: "U60.if",
+        smap: &[true, false, false],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(u60_if_visit),
+          apply: Arc::new(u60_if_apply),
+        }),
+      },
+      Precomp {
+        id: U60_SWAP,
+        name: "U60.swap",
+        smap: &[true, false, false],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(u60_swap_visit),
+          apply: Arc::new(u60_swap_apply),
+        }),
+      },
+      Precomp {
+        id: HVM_LOG,
+        name: "HVM.log",
+        smap: &[false; 2],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(hvm_log_visit),
+          apply: Arc::new(hvm_log_apply),
+        }),
+      },
+      Precomp {
+        id: HVM_QUERY,
+        name: "HVM.query",
+        smap: &[false; 1],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(hvm_query_visit),
+          apply: Arc::new(hvm_query_apply),
+        }),
+      },
+      Precomp {
+        id: HVM_PRINT,
+        name: "HVM.print",
+        smap: &[false; 2],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(hvm_print_visit),
+          apply: Arc::new(hvm_print_apply),
+        }),
+      },
+      Precomp {
+        id: HVM_SLEEP,
+        name: "HVM.sleep",
+        smap: &[false; 2],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(hvm_sleep_visit),
+          apply: Arc::new(hvm_sleep_apply),
+        }),
+      },
+      Precomp {
+        id: HVM_STORE,
+        name: "HVM.store",
+        smap: &[false; 3],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(hvm_store_visit),
+          apply: Arc::new(hvm_store_apply),
+        }),
+      },
+      Precomp {
+        id: HVM_LOAD,
+        name: "HVM.load",
+        smap: &[false; 2],
+        funs: Some(PrecompFuns {
+          visit: Arc::new(hvm_load_visit),
+          apply: Arc::new(hvm_load_apply),
+        }),
+      },
+      //[[CODEGEN:PRECOMP-ELS]]//
+    ])
+  };
 }
 
-pub fn precom_count() -> u64 {
-  PRECOMP.lock().unwrap().len() as u64
+pub fn precomp_get() -> Vec<Precomp> {
+  unsafe {
+      PRECOMP.lock().unwrap().clone()
+  }
+}
+
+pub fn precomp_count() -> u64 {
+  unsafe {
+      PRECOMP.lock().unwrap().len() as u64
+  }
 }
 
 // Ul0.if (cond: Term) (if_t: Term) (if_f: Term)
